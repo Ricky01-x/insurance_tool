@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保險理賠計算工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .step-card {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-left: 5px solid #4facfe;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+
+        .step-title {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .insurance-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .insurance-item:hover {
+            border-color: #4facfe;
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.15);
+        }
+
+        .insurance-info {
+            flex: 1;
+        }
+
+        .insurance-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .insurance-type {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .amount-input {
+            width: 120px;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            text-align: right;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+        }
+
+        .btn-primary:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-1px);
+        }
+
+        .calculate-section {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .scenario-info {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .results-container {
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .results-title {
+            color: #2e7d32;
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .result-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4caf50;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-amount {
+            text-align: right;
+            min-width: 150px;
+        }
+
+        .amount-display {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .amount-positive {
+            color: #4caf50;
+        }
+
+        .amount-zero {
+            color: #9e9e9e;
+        }
+
+        .total-amount {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .total-amount h3 {
+            margin-bottom: 10px;
+        }
+
+        .total-amount .amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .disclaimer {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4facfe;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .insurance-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .result-header {
+                flex-direction: column;
+            }
+            
+            .result-amount {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ 保險理賠計算工具</h1>
+            <p>專業的保險理賠金額評估系統</p>
+        </div>
+
+        <div class="content">
+            <!-- 步驟1: 選擇保險組合 -->
+            <div class="step-card">
+                <h2 class="step-title">
+                    <span class="step-number">1</span>
+                    選擇保險組合
+                </h2>
+                
+                <div class="form-group">
+                    <select id="insuranceSelect" class="form-control">
+                        <option value="">請選擇要加入的保險...</option>
+                    </select>
+                </div>
+
+                <div id="selectedInsurances"></div>
+            </div>
+
+            <!-- 步驟2: 選擇理賠情境 -->
+            <div class="step-card">
+                <h2 class="step-title">
+                    <span class="step-number">2</span>
+                    選擇理賠情境
+                </h2>
+                
+                <div class="form-group">
+                    <select id="scenarioSelect" class="form-control">
+                        <option value="">請選擇理賠情境...</option>
+                    </select>
+                </div>
+
+                <div id="scenarioInfo"></div>
+            </div>
+
+            <!-- 步驟3: 計算按鈕 -->
+            <div class="calculate-section">
+                <button id="calculateBtn" class="btn btn-primary" disabled>
+                    🧮 計算理賠金額
+                </button>
+            </div>
+
+            <!-- 理賠結果 -->
+            <div id="resultsContainer" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 保險產品資料庫
+        const insuranceProducts = [
+            {
+                id: 'NAI',
+                name: '南山人壽新傷害保險附約',
+                type: '意外傷害險',
+                defaultAmount: 1000000,
+                coverage: {
+                    accidentalDeath: { rate: 1, description: '意外身故保險金' },
+                    accidentalDisability: { rate: 0.4, description: '意外失能保險金(40%失能)' },
+                    accidentalMedical: { limit: 100000, description: '意外傷害醫療保險金' },
+                    partialWorkLoss: { weeklyRate: 0.00125, maxWeeks: 4, description: '意外部分喪失工作能力保險金' },
+                    fullWorkLoss: { weeklyRateFirst52: 0.0075, weeklyRateAfter52: 0.00375, maxWeeks: 104, description: '意外完全喪失工作能力保險金' }
+                }
+            },
+            {
+                id: 'NHI', 
+                name: '南山人壽新日溢幸福住院日額健康保險',
+                type: '住院醫療險',
+                defaultAmount: 2000,
+                coverage: {
+                    hospitalDaily: { rate: 1, description: '住院日額保險金' },
+                    icuDaily: { rate: 2, description: '加護病房保險金' },
+                    outpatientVisit: { rate: 0.25, description: '住院前後門診' }
+                }
+            },
+            {
+                id: 'SC',
+                name: '南山人壽長青滿溢癌症定期健康保險', 
+                type: '癌症險',
+                defaultAmount: 2000000,
+                coverage: {
+                    cancerInitial: { rate: 0.05, description: '癌症(初期)保險金' },
+                    cancerMild: { rate: 0.1, description: '癌症(輕度)保險金' },
+                    cancerSevere: { rate: 1, description: '癌症(重度)保險金' }
+                }
+            },
+            {
+                id: 'HYPHI',
+                name: '南山人壽保滿溢醫療終身保險',
+                type: '終身醫療險', 
+                defaultAmount: 1000,
+                coverage: {
+                    hospitalDaily: { rate: 1, description: '住院日額保險金' },
+                    surgery: { rate: 3, description: '住院手術保險金' },
+                    outpatientSurgery: { rate: 0.6, description: '門診手術保險金' }
+                }
+            },
+            {
+                id: 'TED',
+                name: '南山人壽精選傷病定期保險',
+                type: '重大疾病險',
+                defaultAmount: 1000000,
+                coverage: {
+                    criticalIllness5: { rate: 0.05, description: '5%精選傷病保險金' },
+                    criticalIllness10: { rate: 0.1, description: '10%精選傷病保險金' },
+                    criticalIllness100: { rate: 1, description: '100%精選傷病保險金' }
+                }
+            }
+        ];
+
+        // 理賠情境
+        const claimScenarios = [
+            {
+                id: 'fracture',
+                name: '車禍造成大腿骨骨折',
+                description: '意外事故導致骨折，住院7天，醫療費用5萬元',
+                triggers: [
+                    { insuranceId: 'NAI', coverageType: 'accidentalDisability', amount: 400000 },
+                    { insuranceId: 'NAI', coverageType: 'accidentalMedical', amount: 50000 },
+                    { insuranceId: 'NHI', coverageType: 'hospitalDaily', days: 7 },
+                    { insuranceId: 'HYPHI', coverageType: 'hospitalDaily', days: 7 }
+                ]
+            },
+            {
+                id: 'appendix_surgery', 
+                name: '急性盲腸炎手術',
+                description: '疾病住院手術，住院5天',
+                triggers: [
+                    { insuranceId: 'NHI', coverageType: 'hospitalDaily', days: 5 },
+                    { insuranceId: 'HYPHI', coverageType: 'hospitalDaily', days: 5 },
+                    { insuranceId: 'HYPHI', coverageType: 'surgery', amount: 3000 }
+                ]
+            },
+            {
+                id: 'mild_stroke',
+                name: '輕度腦中風',  
+                description: '輕度腦中風，符合10%精選傷病',
+                triggers: [
+                    { insuranceId: 'TED', coverageType: 'criticalIllness10', amount: 100000 }
+                ]
+            },
+            {
+                id: 'pancreatic_cancer',
+                name: '胰腺癌住院治療',
+                description: '確診胰腺癌(重度)，住院30天，其中5天加護病房，手術治療',
+                triggers: [
+                    { insuranceId: 'SC', coverageType: 'cancerSevere', amount: 2000000 },
+                    { insuranceId: 'TED', coverageType: 'criticalIllness100', amount: 1000000 },
+                    { insuranceId: 'NHI', coverageType: 'hospitalDaily', days: 25 },
+                    { insuranceId: 'NHI', coverageType: 'icuDaily', days: 5 },
+                    { insuranceId: 'HYPHI', coverageType: 'hospitalDaily', days: 30 },
+                    { insuranceId: 'HYPHI', coverageType: 'surgery', amount: 3000 }
+                ]
+            },
+            {
+                id: 'work_disability',
+                name: '意外導致無法工作一年',
+                description: '工地意外導致腰椎受傷，完全無法工作52週',
+                triggers: [
+                    { insuranceId: 'NAI', coverageType: 'fullWorkLoss', weeks: 52 },
+                    { insuranceId: 'NAI', coverageType: 'accidentalMedical', amount: 80000 }
+                ]
+            }
+        ];
+
+        let selectedInsurances = [];
+        let selectedScenario = '';
+        let claimResults = [];
+
+        // 初始化
+        function init() {
+            populateInsuranceSelect();
+            populateScenarioSelect();
+            setupEventListeners();
+        }
+
+        function populateInsuranceSelect() {
+            const select = document.getElementById('insuranceSelect');
+            insuranceProducts.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.textContent = `${product.name} (${product.type})`;
+                select.appendChild(option);
+            });
+        }
+
+        function populateScenarioSelect() {
+            const select = document.getElementById('scenarioSelect');
+            claimScenarios.forEach(scenario => {
+                const option = document.createElement('option');
+                option.value = scenario.id;
+                option.textContent = scenario.name;
+                select.appendChild(option);
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('insuranceSelect').addEventListener('change', handleInsuranceChange);
+            document.getElementById('scenarioSelect').addEventListener('change', handleScenarioChange);
+            document.getElementById('calculateBtn').addEventListener('click', calculateClaim);
+        }
+
+        function handleInsuranceChange(e) {
+            const value = e.target.value;
+            if (value && !selectedInsurances.find(ins => ins.id === value)) {
+                const insurance = insuranceProducts.find(p => p.id === value);
+                selectedInsurances.push({
+                    ...insurance,
+                    amount: insurance.defaultAmount
+                });
+                renderSelectedInsurances();
+                updateCalculateButton();
+                e.target.value = '';
+            }
+        }
+
+        function handleScenarioChange(e) {
+            selectedScenario = e.target.value;
+            renderScenarioInfo();
+            updateCalculateButton();
+        }
+
+        function renderSelectedInsurances() {
+            const container = document.getElementById('selectedInsurances');
+            if (selectedInsurances.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <h3 style="margin-bottom: 20px; color: #2d3748;">已選擇的保險:</h3>
+                ${selectedInsurances.map(insurance => `
+                    <div class="insurance-item">
+                        <div class="insurance-info">
+                            <div class="insurance-name">${insurance.name}</div>
+                            <div class="insurance-type">${insurance.type}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label style="font-size: 0.9rem;">保額/日額:</label>
+                            <input type="number" value="${insurance.amount}" 
+                                   class="amount-input" 
+                                   onchange="updateInsuranceAmount('${insurance.id}', this.value)">
+                            <span style="font-size: 0.9rem;">元</span>
+                        </div>
+                        <button class="btn btn-danger" onclick="removeInsurance('${insurance.id}')">
+                            移除
+                        </button>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function renderScenarioInfo() {
+            const container = document.getElementById('scenarioInfo');
+            if (!selectedScenario) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const scenario = claimScenarios.find(s => s.id === selectedScenario);
+            container.innerHTML = `
+                <div class="scenario-info">
+                    <h4 style="color: #1565c0; margin-bottom: 10px;">情境說明:</h4>
+                    <p style="color: #1976d2;">${scenario.description}</p>
+                </div>
+            `;
+        }
+
+        function removeInsurance(id) {
+            selectedInsurances = selectedInsurances.filter(ins => ins.id !== id);
+            renderSelectedInsurances();
+            updateCalculateButton();
+        }
+
+        function updateInsuranceAmount(id, amount) {
+            const insurance = selectedInsurances.find(ins => ins.id === id);
+            if (insurance) {
+                insurance.amount = parseInt(amount) || 0;
+            }
+        }
+
+        function updateCalculateButton() {
+            const btn = document.getElementById('calculateBtn');
+            btn.disabled = !selectedScenario || selectedInsurances.length === 0;
+        }
+
+        function calculateClaim() {
+            if (!selectedScenario || selectedInsurances.length === 0) return;
+
+            const scenario = claimScenarios.find(s => s.id === selectedScenario);
+            const results = [];
+            const noClaimResults = [];
+
+            selectedInsurances.forEach(insurance => {
+                const matchingTrigger = scenario.triggers.find(trigger => trigger.insuranceId === insurance.id);
+                
+                if (!matchingTrigger) {
+                    noClaimResults.push({
+                        insuranceName: insurance.name,
+                        coverageDescription: '此情境不適用',
+                        claimAmount: 0,
+                        calculation: '目前沒有這方面的保障'
+                    });
+                    return;
+                }
+
+                const coverage = insurance.coverage[matchingTrigger.coverageType];
+                if (!coverage) {
+                    noClaimResults.push({
+                        insuranceName: insurance.name,
+                        coverageDescription: '此情境不適用',
+                        claimAmount: 0,
+                        calculation: '目前沒有這方面的保障'
+                    });
+                    return;
+                }
+
+                let claimAmount = 0;
+                let calculation = '';
+
+                if (matchingTrigger.amount) {
+                    claimAmount = matchingTrigger.amount;
+                    calculation = `固定給付 ${claimAmount.toLocaleString()} 元`;
+                } else if (matchingTrigger.days && coverage.rate) {
+                    claimAmount = insurance.amount * coverage.rate * matchingTrigger.days;
+                    calculation = `${insurance.amount.toLocaleString()} × ${coverage.rate} × ${matchingTrigger.days}天 = ${claimAmount.toLocaleString()} 元`;
+                } else if (matchingTrigger.weeks && coverage.weeklyRateFirst52) {
+                    const weeks = Math.min(matchingTrigger.weeks, 104);
+                    if (weeks <= 52) {
+                        claimAmount = insurance.amount * coverage.weeklyRateFirst52 * weeks;
+                        calculation = `${insurance.amount.toLocaleString()} × ${coverage.weeklyRateFirst52} × ${weeks}週 = ${claimAmount.toLocaleString()} 元`;
+                    } else {
+                        const first52Amount = insurance.amount * coverage.weeklyRateFirst52 * 52;
+                        const remainingWeeks = weeks - 52;
+                        const remainingAmount = insurance.amount * coverage.weeklyRateAfter52 * remainingWeeks;
+                        claimAmount = first52Amount + remainingAmount;
+                        calculation = `前52週: ${first52Amount.toLocaleString()} + 後${remainingWeeks}週: ${remainingAmount.toLocaleString()} = ${claimAmount.toLocaleString()} 元`;
+                    }
+                } else if (matchingTrigger.weeks && coverage.weeklyRate) {
+                    const weeks = Math.min(matchingTrigger.weeks, coverage.maxWeeks || 4);
+                    claimAmount = insurance.amount * coverage.weeklyRate * weeks;
+                    calculation = `${insurance.amount.toLocaleString()} × ${coverage.weeklyRate} × ${weeks}週 = ${claimAmount.toLocaleString()} 元`;
+                } else if (coverage.rate) {
+                    claimAmount = insurance.amount * coverage.rate;
+                    calculation = `${insurance.amount.toLocaleString()} × ${coverage.rate} = ${claimAmount.toLocaleString()} 元`;
+                } else if (coverage.limit && matchingTrigger.amount) {
+                    claimAmount = Math.min(matchingTrigger.amount, coverage.limit);
+                    calculation = `實際費用 ${matchingTrigger.amount.toLocaleString()} 元 (限額 ${coverage.limit.toLocaleString()} 元)`;
+                }
+
+                if (claimAmount > 0) {
+                    results.push({
+                        insuranceName: insurance.name,
+                        coverageDescription: coverage.description,
+                        claimAmount,
+                        calculation
+                    });
+                } else {
+                    noClaimResults.push({
+                        insuranceName: insurance.name,
+                        coverageDescription: coverage.description,
+                        claimAmount: 0,
+                        calculation: '目前沒有這方面的保障'
+                    });
+                }
+            });
+
+            claimResults = [...results, ...noClaimResults];
+            renderResults();
+        }
+
+        function renderResults() {
+            const container = document.getElementById('resultsContainer');
+            const totalClaim = claimResults.reduce((sum, result) => sum + result.claimAmount, 0);
+            const hasValidClaims = claimResults.some(result => result.claimAmount > 0);
+            const validClaims = claimResults.filter(result => result.claimAmount > 0);
+
+            container.innerHTML = `
+                <div class="results-container">
+                    <h2 class="results-title">📊 理賠計算結果</h2>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">${selectedInsurances.length}</div>
+                            <div class="stat-label">投保項目</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${validClaims.length}</div>
+                            <div class="stat-label">適用保障</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${claimResults.length - validClaims.length}</div>
+                            <div class="stat-label">不適用項目</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        ${claimResults.map(result => `
+                            <div class="result-item">
+                                <div class="result-header">
+                                    <div class="result-info">
+                                        <div style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">
+                                            ${result.insuranceName}
+                                        </div>
+                                        <div style="color: #718096; font-size: 0.9rem; margin-bottom: 8px;">
+                                            ${result.coverageDescription}
+                                        </div>
+                                        <div style="color: #a0aec0; font-size: 0.85rem;">
+                                            計算: ${result.calculation}
+                                        </div>
+                                    </div>
+                                    <div class="result-amount">
+                                        <div class="amount-display ${result.claimAmount > 0 ? 'amount-positive' : 'amount-zero'}">
+                                            ${result.claimAmount > 0 ? 
+                                                `${result.claimAmount.toLocaleString()} 元` : 
+                                                '0元'
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                        
+                        <div class="total-amount">
+                            <h3>總理賠金額</h3>
+                            <div class="amount">
+                                ${hasValidClaims ? 
+                                    `${totalClaim.toLocaleString()} 元` : 
+                                    '目前沒有適用的保障項目'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+
+                </div>
+                
+                <!-- 免責聲明 -->
+                <div class="disclaimer">
+                    <strong>⚠️ 免責聲明:</strong> 本工具僅供參考，實際理賠金額應以保險合約條款及保險公司核定為準。
+                    計算結果不構成任何理賠承諾。
+                </div>
+            `;
+
+            container.style.display = 'block';
+        }
+
+        // 頁面載入完成後初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
